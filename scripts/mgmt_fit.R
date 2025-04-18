@@ -434,7 +434,7 @@ pre_mgmt_plot <- function() {
          title = (as.expression(bquote(bold("Hunting management")))),
          #title.adj = -0.02, ##if including E4 and E10
          legend=c("Not proposed (8)", "Before project (1)",
-                  "Implemented (3)", "Unimplemented (5)"
+                  "(Re)established (3)", "Not (re)established (5)"
                   #,"Unimplemented, data post-mgmt (2)" #E4 and E10
          ),
          pt.bg=c("gray", met_jodi(9,10),
@@ -513,7 +513,8 @@ prior_summary(mgmtoff)
 
 #graphical checks
 
-bp_quick(mgmtoff)
+dev.off()
+bp_quick25(mgmtoff)
 
 #summary
 mgmtoff
@@ -689,7 +690,7 @@ offmgmt_h_zigp <- readRDS("./outputs/mgmt_fits/offmgmt_h_zigp.rds")
 
 #summaries of inputs across villages
 offtake_period %>% 
-  filter(village %in% c(imp_im$village,imp_ui$village)&
+  filter(village %in% c(imp_im$village,imp_ui$village) &
            period == "pre") %>% 
   group_by(village) %>% 
   summarize(n_days = n()) %>% 
@@ -1088,6 +1089,13 @@ change2plot <- left_join(change2plot,
   dplyr::select(village,`Hunting management` = mgmt,
                 `Animals hunted (92% UI)`, everything())
 
+change2plot <- change2plot %>% 
+  mutate(`Hunting management` = fct_recode(`Hunting management`,
+                               "(Re)established" = "Implemented",
+                               "Not (re)established" = "Unimplemented")
+         )
+  
+
 min(change2plot$lui_cnt)
 max(change2plot$uui_cnt)
 
@@ -1096,8 +1104,8 @@ max(change2plot$uui_per)
 
 mgmt_cols <- c(`Not proposed` = "gray",
                `Before project` = met_jodi(9,10),
-               Implemented = met_jodi(6,10),
-               Unimplemented = met_jodi(1,10)
+               `(Re)established` = met_jodi(6,10),
+               `Not (re)established` = met_jodi(1,10)
 )
 
 mgmt_lt <- c(`Per day, village-wide` = "solid",
@@ -1141,12 +1149,10 @@ mgmt_cnt_plot <- ggplot(change2plot, aes(x=village, y=mean_cnt,
     panel.border = element_rect(colour = "black", fill=NA, size=0.8),
     plot.margin = unit(c(0.4, 2, 0.4, 0.2), "cm"))
 
-mgmt_cnt_plot
-
 #final plot
 dev.off()
 
-cairo_pdf(file = "./outputs/figs/f1.pdf", 
+cairo_pdf(file = "./outputs/figs/f1_together.pdf", 
           width = 10, height =  10) 
 
 ggdraw() +
@@ -1165,3 +1171,145 @@ ggdraw() +
 
 dev.off()
 
+#seperate figures
+
+#sf1
+#pdfcrop --margin 10 sf1.pdf sf1.pdf
+#run the above line in terminal in /fig in linux to crop!
+dev.off()
+
+cairo_pdf(file = "./outputs/figs/sf1.pdf", 
+          width = 10, height =  10) 
+
+ggdraw() +
+  draw_plot(pre_mgmt_plot,
+            x = 0.017, 
+            #y = 0,
+            y = 0.1 -0.025,
+            width = 0.33, height = 0.7) +
+  draw_plot(mgmtoff_plot,
+            x = 0.33 + 0.017,
+            #y = 0,
+            y = 0.1,
+            width = 0.71, #0.667
+            height = 0.7) 
+
+dev.off()
+
+# Check if pdfcrop is available
+is_pdfcrop_installed <- system("which pdfcrop", intern = TRUE) != ""
+
+# If pdfcrop is available, run cropping
+if (is_pdfcrop_installed) {
+  system("pdfcrop --margin 10 ./outputs/figs/sf1.pdf ./outputs/figs/sf1.pdf")
+} else {
+  message("pdfcrop is not installed. Please install TeX Live (or MiKTeX) to use cropping functionality.")
+}
+
+#f1
+
+mgmt_cnt_plot_seul <- ggplot(change2plot, aes(x=village, y=mean_cnt, 
+                                         linetype = `Animals hunted (92% UI)`, 
+                                         colour = `Hunting management`, 
+                                         fill = `Hunting management`)) +
+  geom_hline(yintercept=0, linetype="dotted", color = "black") +
+  geom_errorbar(aes(ymin=lui_cnt, ymax=uui_cnt),
+                width= 0, position=position_dodge(.6))+
+  geom_point(position=position_dodge(.6),
+             shape = 21,  size = 3, colour = "black") +
+  scale_fill_manual(values = c(mgmt_cols)) +
+  scale_colour_manual(values = c(mgmt_cols)) +
+  scale_linetype_manual(values = c(mgmt_lt)) +
+  labs(x = "\nVillage\n", 
+       linetype = (as.expression(bquote(bold("Animals hunted (92% UI)")))),
+       fill = (as.expression(bquote(bold("Hunting management"))))
+  )+
+  guides(color = "none" 
+         #,fill = guide_legend(order = 1)
+  )+
+  scale_y_continuous(name = "Post-management estimated change\n", 
+                     limits = c(-3.6,1.4),
+                     #breaks = seq(-0.6,0.6, by = 0.3),
+                     #labels = seq(-0.6,0.6, by = 0.3)
+  ) +
+  theme(#legend.position = c(0.09,0.97),
+    legend.title = element_text(size=10),
+    legend.text = element_text(size=10),
+    axis.line = element_blank(),
+    axis.ticks = element_line(colour = "black"),
+    axis.text=element_text(size=11, colour = "black"),
+    legend.justification = "top",
+    axis.title.x = element_text(size = 12),
+    axis.title.y= element_text(size = 12),
+    plot.title = element_text(hjust = 0.5),
+    panel.border = element_rect(colour = "black", fill=NA, size=0.8),
+    plot.margin = unit(c(0.4, 2, 0.4, 0.2), "cm"))
+
+mgmt_cnt_plot_seul
+
+
+##CAN NOW PLOT ACTUAL POINTS
+
+bind_rows(imp_np, imp_bp, imp_im, imp_ui)
+
+pre_off <- imp_off %>% 
+  mutate(mgmt = fct_recode(mgmt,
+                           "(Re)established" = "Implemented",
+                                           "Not (re)established" = "Unimplemented")
+         ) 
+
+pre_vl <- pre_off %>% 
+  arrange(animals) %>% 
+  pull(village)
+
+pre_off <- pre_off %>% 
+  mutate(vf = factor(village, levels = pre_vl))
+
+pre_off$vf
+
+pre_mgmt_plot_seul <- ggplot(pre_off, aes(x=vf, y=animals, fill = mgmt))+
+  geom_point(shape = 21,  size = 3, colour = "black", 
+              #width = 0.003, height = 0,
+              show.legend = FALSE) +
+  scale_fill_manual(values = c(mgmt_cols)) +
+  scale_colour_manual(values = c(mgmt_cols))+
+  coord_flip()+
+  labs(x = "Village\n", y =  "\nPre-management\nanimals hunted (per day, village-wide)")+
+  theme(
+  axis.line = element_blank(),
+  axis.ticks = element_line(colour = "black"),
+  #axis.ticks.x = element_blank(),
+  axis.text=element_text(size=11, colour = "black"),
+  #axis.text.x = element_blank(),
+  #axis.title.x = element_blank(),
+  axis.title.y= element_text(size = 12),
+  plot.title = element_text(hjust = 0.5),
+  panel.border = element_rect(colour = "black", fill=NA, size=0.8),
+  plot.margin = unit(c(0.4, 2, 0.4, 0.2), "cm"))
+
+dev.off()
+
+cairo_pdf(file = "./outputs/figs/f1.pdf", 
+          width = 15, height =  5) 
+
+ggdraw() +
+  draw_plot(pre_mgmt_plot_seul,
+            x = 0, 
+            y = 0,
+            width = 0.25, 
+            height = 1) +
+  draw_plot(mgmt_cnt_plot_seul,
+            x = 0.25, 
+            width = 0.75,
+            y = 0, 
+            height = 1)
+
+dev.off()
+
+
+# If pdfcrop is available, run cropping
+if (is_pdfcrop_installed) {
+  system("pdfcrop --margin 10 ./outputs/figs/f1.pdf ./outputs/figs/f1.pdf")
+} else {
+  message("pdfcrop is not installed. Please install TeX Live (or MiKTeX) to use cropping functionality.")
+}

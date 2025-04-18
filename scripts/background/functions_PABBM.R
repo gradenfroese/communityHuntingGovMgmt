@@ -538,15 +538,16 @@ change_wzi <- function(mf,nch,cui,vn1,vn2,vzi1,vzi2) {
 
 ##28 check bayes plot graphical checks
 
-bp_quick <- function (x) {
+#new version
+bp_quick25 <- function (x) {
   
   tmp_fit <- x
   
   postarray_tmp_fit <- as.array(tmp_fit)
-  lp_tmp_fit <- log_posterior(tmp_fit) 
+  lp_tmp_fit <- log_posterior(tmp_fit)
   np_tmp_fit <- nuts_params(tmp_fit)
   
-  #diagnostics 
+  #diagnostics
   p1 <- mcmc_trace(postarray_tmp_fit)
   p2 <- mcmc_parcoord(postarray_tmp_fit, np = np_tmp_fit)
   p3 <- mcmc_pairs(postarray_tmp_fit, np = np_tmp_fit)
@@ -558,18 +559,53 @@ bp_quick <- function (x) {
   #ppc
   p8 <- pp_check(tmp_fit, ndraws = 100)
   prop_zero <- function(x) mean(x == 0)
-  
+
   p9 <- ppc_stat(y = tmp_fit$data[1] %>% pull(1),
                  posterior_epred(tmp_fit)[1:1000,],
                  stat = "mean")
-  
+
   p10 <- ppc_stat(y = tmp_fit$data[1] %>% pull(1),
                   posterior_epred(tmp_fit)[1:1000,],
                   stat = "prop_zero")
-  
+
   check_plots <- list(p1,p2,p3,p4,p5,p6,p7,p8,p9,p10)
   return(check_plots)
   
+}
+
+#old version
+bp_quick <- function (x) {
+
+  tmp_fit <- x
+
+  postarray_tmp_fit <- as.array(tmp_fit)
+  lp_tmp_fit <- log_posterior(tmp_fit)
+  np_tmp_fit <- nuts_params(tmp_fit)
+
+  #diagnostics
+  p1 <- mcmc_trace(postarray_tmp_fit)
+  p2 <- mcmc_parcoord(postarray_tmp_fit, np = np_tmp_fit)
+  p3 <- mcmc_pairs(postarray_tmp_fit, np = np_tmp_fit)
+  p4 <- mcmc_nuts_divergence(np_tmp_fit, lp_tmp_fit)
+  p5 <- mcmc_nuts_energy(np_tmp_fit)
+  p6 <- mcmc_rhat(rhat(tmp_fit)) + yaxis_text(hjust = 1)
+  p7 <- mcmc_neff(neff_ratio(tmp_fit)) + yaxis_text(hjust = 1)
+
+  #ppc
+  p8 <- pp_check(tmp_fit, ndraws = 100)
+  prop_zero <- function(x) mean(x == 0)
+
+  p9 <- ppc_stat(y = tmp_fit$data[1] %>% pull(1),
+                 posterior_epred(tmp_fit)[1:1000,],
+                 stat = "mean")
+
+  p10 <- ppc_stat(y = tmp_fit$data[1] %>% pull(1),
+                  posterior_epred(tmp_fit)[1:1000,],
+                  stat = "prop_zero")
+
+  check_plots <- list(p1,p2,p3,p4,p5,p6,p7,p8,p9,p10)
+  return(check_plots)
+
 }
 
 
