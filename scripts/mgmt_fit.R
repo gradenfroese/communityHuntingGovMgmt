@@ -1131,7 +1131,7 @@ mgmt_cnt_plot <- ggplot(change2plot, aes(x=village, y=mean_cnt,
   guides(color = "none" 
          #,fill = guide_legend(order = 1)
   )+
-  scale_y_continuous(name = "Post-management\nestimated change\n", 
+  scale_y_continuous(name = "Post-management\nchange in animals hunted\n", 
                      limits = c(-3.6,1.4),
                      #breaks = seq(-0.6,0.6, by = 0.3),
                      #labels = seq(-0.6,0.6, by = 0.3)
@@ -1227,7 +1227,7 @@ mgmt_cnt_plot_seul <- ggplot(change2plot, aes(x=village, y=mean_cnt,
   guides(color = "none" 
          #,fill = guide_legend(order = 1)
   )+
-  scale_y_continuous(name = "Post-management estimated change\n", 
+  scale_y_continuous(name = "Post-management change (animals hunted)\n", 
                      limits = c(-3.6,1.4),
                      #breaks = seq(-0.6,0.6, by = 0.3),
                      #labels = seq(-0.6,0.6, by = 0.3)
@@ -1249,8 +1249,6 @@ mgmt_cnt_plot_seul
 
 
 ##CAN NOW PLOT ACTUAL POINTS
-
-bind_rows(imp_np, imp_bp, imp_im, imp_ui)
 
 pre_off <- imp_off %>% 
   mutate(mgmt = fct_recode(mgmt,
@@ -1274,7 +1272,7 @@ pre_mgmt_plot_seul <- ggplot(pre_off, aes(x=vf, y=animals, fill = mgmt))+
   scale_fill_manual(values = c(mgmt_cols)) +
   scale_colour_manual(values = c(mgmt_cols))+
   coord_flip()+
-  labs(x = "Village\n", y =  "\nPre-management\nanimals hunted (per day, village-wide)")+
+  labs(x = "Village\n", y =  "\nPre-management animals hunted\n(per day, village-wide)")+
   theme(
   axis.line = element_blank(),
   axis.ticks = element_line(colour = "black"),
@@ -1287,6 +1285,9 @@ pre_mgmt_plot_seul <- ggplot(pre_off, aes(x=vf, y=animals, fill = mgmt))+
   panel.border = element_rect(colour = "black", fill=NA, size=0.8),
   plot.margin = unit(c(0.4, 2, 0.4, 0.2), "cm"))
 
+
+pre_mgmt_plot_seul
+
 dev.off()
 
 cairo_pdf(file = "./outputs/figs/f1.pdf", 
@@ -1296,11 +1297,11 @@ ggdraw() +
   draw_plot(pre_mgmt_plot_seul,
             x = 0, 
             y = 0,
-            width = 0.25, 
+            width = 0.27, 
             height = 1) +
   draw_plot(mgmt_cnt_plot_seul,
-            x = 0.25, 
-            width = 0.75,
+            x = 0.27, 
+            width = 0.73,
             y = 0, 
             height = 1)
 
